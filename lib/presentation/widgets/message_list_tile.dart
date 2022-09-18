@@ -20,12 +20,13 @@ class MessageListTile extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: ListTile(
         dense: true,
+        trailing: Text(_message.content),
         title: Text(
-          _message.content,
+          _message.uidSender,
           textAlign: textAlign,
         ),
         subtitle: Text(
-          _message.timestamp,
+          _message.uidReceiver,
           textAlign: textAlign,
           style: TextStyle(fontSize: 10),
         ),

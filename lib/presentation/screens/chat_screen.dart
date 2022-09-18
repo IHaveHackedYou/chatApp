@@ -66,7 +66,7 @@ class ChatScreen extends StatelessWidget {
                                 shrinkWrap: true,
                                 itemCount: messages.length,
                                 itemBuilder: (context, index) {
-                                  if (messages[index].uidReceiver == _userId) {
+                                  if (messages[index].uidSender == _userId) {
                                     return MessageListTile(messages[index],
                                         MessageListTileType.contact);
                                   } else {
