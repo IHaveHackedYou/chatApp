@@ -16,6 +16,7 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
 
   Future<void> _fetchMessagesEvent(
       FirestoreFetchMessages event, Emitter<FirestoreState> emit) async {
+
     await _fetchMessages(event._userUid, event._contactUid, emit);
   }
 
@@ -28,6 +29,9 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
 
       newMessages = new List.from(newMessages)
         ..addAll(await _fetchMessagesOffline(userId, contactUid));
+      newMessages.sort((a, b) {
+        return a.timestamp.compareTo(b.timestamp);
+      });
       emit(FirestoreMessagesLoaded(newMessages));
     } on Exception catch (e) {
       emit(FirestoreMessagesLoadingError());
@@ -36,6 +40,7 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
 
   Future<List<Message>> _fetchMessagesOnline(
       String userId, String contactUid) async {
+        print(userId);
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection("contacts")
         .doc(userId)
@@ -45,6 +50,23 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
     List<Message> newMessages = [];
     newMessagesMap.forEach((element) =>
         newMessages.add(Message.fromMap(element as Map<String, dynamic>)));
+    try {
+      await _saveMessagesOffline(newMessages);
+      FirebaseFirestore.instance
+        .collection("contacts")
+        .doc(userId)
+        .collection("messages").get().then((value) {
+          for(DocumentSnapshot ds in snapshot.docs){
+            ds.reference.delete();
+          }
+        },);
+    } on Exception catch (e) {}
+    for (int i = 0; i < newMessages.length; i++) {
+      if (newMessages[i].uidReceiver != userId ||
+          newMessages[i].uidSender != contactUid) {
+        newMessages.remove(newMessages[i]);
+      }
+    }
     return newMessages;
   }
 
@@ -58,9 +80,6 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
     messagesJSON?.forEach(((element) {
       newMessages.add(Message.fromJson(element));
     }));
-    newMessages.sort((a, b) {
-      return a.timestamp.compareTo(b.timestamp);
-    });
     return newMessages;
   }
 
@@ -75,23 +94,36 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
           .collection("messages")
           .doc(event.message.messageId)
           .set(event.message.toMap());
-      _sendMessageOffline(
+      _saveMessageOffline(
           event.message, event.message.uidSender, event.message.uidReceiver);
-      await _fetchMessages(event.message.uidSender, event.message.uidReceiver, emit);
+      await _fetchMessages(
+          event.message.uidSender, event.message.uidReceiver, emit);
       emit(FirestoreMessageSended());
     } on Exception catch (e) {
       emit(FirestoreMessageSendingError());
     }
   }
 
-  Future<void> _sendMessageOffline(
+  Future<void> _saveMessageOffline(
       Message message, String userId, String contactUid) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? messagesJSON = prefs.getStringList(
+    List<String>? messagesJSON = await prefs.getStringList(
         userId + "__///__" + contactUid + "__///__" + "messages");
-    messagesJSON?.add(message.toJson());
+    if(messagesJSON == null){
+      messagesJSON = [];
+    }
+    messagesJSON.add(message.toJson());
     prefs.setStringList(
         userId + "__///__" + contactUid + "__///__" + "messages",
-        messagesJSON!);
+        messagesJSON);
+  }
+
+  Future<void> _saveMessagesOffline(List<Message> messages) async {
+    messages.forEach(
+      (element) async {
+        await _saveMessageOffline(
+            element, element.uidSender, element.uidReceiver);
+      },
+    );
   }
 }

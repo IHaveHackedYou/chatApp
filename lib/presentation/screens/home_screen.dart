@@ -23,7 +23,6 @@ class HomeScreen extends StatelessWidget {
               builder: (context, state) {
                 _cubit = BlocProvider.of<ContactCubit>(context);
                 List<Contact> contacts = _cubit!.contacts;
-                print(contacts);
                 // return Text("fd");
                 return BlocProvider.value(
                   value: _cubit!,

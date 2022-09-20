@@ -27,10 +27,8 @@ class ChatScreen extends StatelessWidget {
     return BlocProvider(
         create: (context) => FirestoreBloc(),
         child: Builder(builder: (context) {
-          Provider.of<FirestoreBloc>(context, listen: false).add(
-              FirestoreFetchMessages(
-                  Provider.of<AuthenticationBloc>(context).user.uid!,
-                  _contact.uid));
+          Provider.of<FirestoreBloc>(context, listen: false)
+              .add(FirestoreFetchMessages(_contact.uid, _userId!));
           return Scaffold(
               appBar: HomeAppBar(_contact.uid, true),
               body: BlocConsumer<FirestoreBloc, FirestoreState>(
