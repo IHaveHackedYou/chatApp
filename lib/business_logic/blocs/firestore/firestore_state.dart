@@ -1,8 +1,9 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 part of 'firestore_bloc.dart';
 
 abstract class FirestoreState extends Equatable {
   const FirestoreState();
-  
+
   @override
   List<Object> get props => [];
 }
@@ -16,7 +17,12 @@ class FirestoreMessagesLoaded extends FirestoreState {
   FirestoreMessagesLoaded(this.messages);
 }
 
-class FirestoreMessagesLoadingError extends FirestoreState {}
+class FirestoreMessagesLoadingError extends FirestoreState {
+  String errorMessage;
+  FirestoreMessagesLoadingError(
+    this.errorMessage,
+  );
+}
 
 class FirestoreMessageSending extends FirestoreState {}
 

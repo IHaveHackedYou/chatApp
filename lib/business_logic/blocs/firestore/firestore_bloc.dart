@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:newwfirst/data/model/message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,16 +17,20 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
     on<FirestoreSendMessage>((event, emit) => _sendMessage(event, emit));
   }
 
-  Future<List<Message>> _fetchMessagesOnline(
+  Future<void> _fetchMessagesOnline(
       String userId, Emitter<FirestoreState> emit) async {
-
     emit(FirestoreMessagesLoading());
+    if (!await InternetConnectionChecker().hasConnection) {
+      emit(FirestoreMessagesLoadingError("no Internet connection available"));
+      return;
+    }
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection("contacts")
         .doc(userId)
         .collection("messages")
         .get();
-    final newMessagesMap = await snapshot.docs.map((doc) => doc.data()).toList();
+    final newMessagesMap =
+        await snapshot.docs.map((doc) => doc.data()).toList();
     List<Message> newMessages = [];
     newMessagesMap.forEach((element) =>
         newMessages.add(Message.fromMap(element as Map<String, dynamic>)));
@@ -50,7 +55,6 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
       );
     } on Exception catch (e) {}
     emit(FirestoreMessagesLoaded(newMessages));
-    return newMessages;
   }
 
   Future<List<Message>> _fetchMessagesOffline(
@@ -106,11 +110,11 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
         userId + "__///__" + contactUid + "__///__" + "messages", messagesJSON);
   }
 
-  Future<void> _saveMessagesOffline(List<Message> messages, String userId) async {
+  Future<void> _saveMessagesOffline(
+      List<Message> messages, String userId) async {
     messages.forEach(
       (element) async {
-        await _saveMessageOffline(
-            element, userId, element.uidSender);
+        await _saveMessageOffline(element, userId, element.uidSender);
       },
     );
   }

@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, state) {
                     _cubit = BlocProvider.of<ContactCubit>(context);
                     List<Contact> _contacts = _cubit!.contacts;
-                    // return Text("fd");
+                    
                     return BlocConsumer<FirestoreBloc, FirestoreState>(
                       listener: (context, state) {
                         if (state is FirestoreMessagesLoaded) {

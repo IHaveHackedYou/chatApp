@@ -52,13 +52,13 @@ class _ChatScreenState extends State<ChatScreen> {
           if (_refreshTimer != null) {
             _refreshTimer!.cancel();
           }
-          Provider.of<FirestoreBloc>(context, listen: false)
-              .add(FirestoreFetchMessagesOffline(widget._contact.uid, _userId!));
+          Provider.of<FirestoreBloc>(context, listen: false).add(
+              FirestoreFetchMessagesOffline(widget._contact.uid, _userId!));
           _refreshTimer = Timer.periodic(Duration(seconds: 5), (timer) {
-                widget._contact.newMessages = 0;
+            widget._contact.newMessages = 0;
 
-            Provider.of<FirestoreBloc>(context, listen: false)
-                .add(FirestoreFetchMessagesOffline(widget._contact.uid, _userId!));
+            Provider.of<FirestoreBloc>(context, listen: false).add(
+                FirestoreFetchMessagesOffline(widget._contact.uid, _userId!));
           });
 
           return Scaffold(
@@ -100,7 +100,8 @@ class _ChatScreenState extends State<ChatScreen> {
                               itemBuilder: (context, index) {
                                 List<Message> _reversedList =
                                     new List.from(messages.reversed);
-                                if (messages[index].uidSender == _userId) {
+                                print(_reversedList[index]);
+                                if (_reversedList[index].uidSender == _userId) {
                                   return MessageListTile(_reversedList[index],
                                       MessageListTileType.user);
                                 } else {
@@ -128,16 +129,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                       _messageController.text.isEmpty) {
                                     return;
                                   }
-                                  final position = _listViewController
-                                      .position.maxScrollExtent;
-                                  _listViewController.jumpTo(position);
-                                  // messages.add(Message(
-                                  //     messageId: "69420",
-                                  //     content: _messageController.text,
-                                  //     uidSender: _userId!,
-                                  //     uidReceiver: widget._contact.uid,
-                                  //     timestamp:
-                                  //         DateTime.now().toIso8601String()));
+                                  messages.add(Message(
+                                      messageId: "69420",
+                                      content: _messageController.text,
+                                      uidSender: _userId!,
+                                      uidReceiver: widget._contact.uid,
+                                      timestamp:
+                                          DateTime.now().toIso8601String()));
                                   Provider.of<FirestoreBloc>(context,
                                           listen: false)
                                       .add(FirestoreSendMessage(Message(
@@ -152,6 +150,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           timestamp:
                                               DateTime.now().toIso8601String(),
                                           content: _messageController.text)));
+                                  final position = _listViewController
+                                      .position.minScrollExtent;
+                                  _listViewController.jumpTo(position);
                                 })
                           ])
                         ]));
