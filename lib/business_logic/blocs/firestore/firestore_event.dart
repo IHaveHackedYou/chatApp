@@ -7,10 +7,15 @@ abstract class FirestoreEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class FirestoreFetchMessages extends FirestoreEvent {
+class FirestoreFetchMessagesOnline extends FirestoreEvent {
+  final String _userUid;
+  FirestoreFetchMessagesOnline(this._userUid);
+}
+
+class FirestoreFetchMessagesOffline extends FirestoreEvent {
   final String _contactUid;
   final String _userUid;
-  FirestoreFetchMessages(this._contactUid, this._userUid);
+  FirestoreFetchMessagesOffline(this._contactUid, this._userUid);
 }
 
 class FirestoreSendMessage extends FirestoreEvent {

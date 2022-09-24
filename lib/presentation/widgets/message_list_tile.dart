@@ -11,24 +11,31 @@ class MessageListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     TextAlign? textAlign = null;
+    Color? boxColor = null;
     if (_listTileType == MessageListTileType.contact) {
-      textAlign = TextAlign.end;
-    }else{
       textAlign = TextAlign.start;
+      boxColor = Color.fromARGB(255, 255, 0, 0);
+    } else {
+      textAlign = TextAlign.end;
+            boxColor = Color.fromARGB(110, 182, 182, 182);
+
     }
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: ListTile(
-        dense: true,
-        trailing: Text(_message.content),
-        title: Text(
-          _message.uidSender,
-          textAlign: textAlign,
-        ),
-        subtitle: Text(
-          _message.uidReceiver,
-          textAlign: textAlign,
-          style: TextStyle(fontSize: 10),
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)), color: boxColor),
+        child: ListTile(
+          dense: true,
+          title: Text(
+            _message.content,
+            textAlign: textAlign,
+            maxLines: 50,
+          ),
+          subtitle: Text(
+            _message.timestamp,
+            textAlign: textAlign,
+            style: TextStyle(fontSize: 10),
+          ),
         ),
       ),
     );

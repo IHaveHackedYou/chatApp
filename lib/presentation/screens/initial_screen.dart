@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newwfirst/business_logic/blocs/authentication/authentication_bloc.dart';
+import 'package:provider/provider.dart';
 
 class InitialScreen extends StatelessWidget {
   const InitialScreen({Key? key}) : super(key: key);
 
+
   @override
   Widget build(BuildContext context) {
+            Provider.of<AuthenticationBloc>(context, listen: false).add(TryAutoSignIn());
+
     return Scaffold(
         body: BlocListener<AuthenticationBloc, AuthenticationState>(
       listener: (context, state) {

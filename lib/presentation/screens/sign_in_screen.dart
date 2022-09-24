@@ -17,6 +17,8 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
+  bool _checkBoxValue = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,6 +94,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 }),
               ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
                     onPressed: (() {
@@ -99,6 +102,16 @@ class _SignInScreenState extends State<SignInScreen> {
                     }),
                     child: Text("forgot password?"),
                   ),
+                  Row(
+                    children: [
+                      Checkbox(value: _checkBoxValue, onChanged: ((value) {
+                        setState(() {
+                          _checkBoxValue = value!;
+                        });
+                      })),
+                      Text("stay signed in"),
+                    ],
+                  )
                 ],
               ),
               const SizedBox(height: 10),
@@ -116,7 +129,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     onPressed: (() {
                       if (formKey.currentState!.validate()) {
                         context.read<AuthenticationBloc>().add(SignIn(
-                            emailController.text, passwordController.text));
+                            emailController.text, passwordController.text, _checkBoxValue));
                       }
                     }),
                   ),

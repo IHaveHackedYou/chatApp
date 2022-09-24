@@ -57,7 +57,7 @@ class ContactAddBottomSheet extends StatelessWidget {
                   Expanded(child: TextField(
                     onSubmitted: (value) {
                       Provider.of<ContactCubit>(context, listen: false)
-                          .addContact(Contact(value));
+                          .addContact(Contact(value, 0));
                       Navigator.pop(context);
                     },
                   )),

@@ -9,69 +9,53 @@ part 'firestore_state.dart';
 
 class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
   FirestoreBloc() : super(FirestoreInitial()) {
-    on<FirestoreFetchMessages>(
-        (event, emit) => _fetchMessagesEvent(event, emit));
+    on<FirestoreFetchMessagesOffline>((event, emit) =>
+        _fetchMessagesOffline(event._userUid, event._contactUid, emit));
+    on<FirestoreFetchMessagesOnline>(
+        (event, emit) => _fetchMessagesOnline(event._userUid, emit));
     on<FirestoreSendMessage>((event, emit) => _sendMessage(event, emit));
   }
 
-  Future<void> _fetchMessagesEvent(
-      FirestoreFetchMessages event, Emitter<FirestoreState> emit) async {
-
-    await _fetchMessages(event._userUid, event._contactUid, emit);
-  }
-
-  Future<void> _fetchMessages(
-      String userId, String contactUid, Emitter<FirestoreState> emit) async {
-    emit(FirestoreMessagesLoading());
-    try {
-      List<Message> newMessages =
-          await _fetchMessagesOnline(userId, contactUid);
-
-      newMessages = new List.from(newMessages)
-        ..addAll(await _fetchMessagesOffline(userId, contactUid));
-      newMessages.sort((a, b) {
-        return a.timestamp.compareTo(b.timestamp);
-      });
-      emit(FirestoreMessagesLoaded(newMessages));
-    } on Exception catch (e) {
-      emit(FirestoreMessagesLoadingError());
-    }
-  }
-
   Future<List<Message>> _fetchMessagesOnline(
-      String userId, String contactUid) async {
-        print(userId);
+      String userId, Emitter<FirestoreState> emit) async {
+
+    emit(FirestoreMessagesLoading());
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection("contacts")
         .doc(userId)
         .collection("messages")
         .get();
-    final newMessagesMap = snapshot.docs.map((doc) => doc.data()).toList();
+    final newMessagesMap = await snapshot.docs.map((doc) => doc.data()).toList();
     List<Message> newMessages = [];
     newMessagesMap.forEach((element) =>
         newMessages.add(Message.fromMap(element as Map<String, dynamic>)));
+    newMessages.sort((a, b) {
+      return a.timestamp.compareTo(b.timestamp);
+    });
+    print("NEW ONLINE MESSAGES");
+    print(newMessages);
     try {
-      await _saveMessagesOffline(newMessages);
+      await _saveMessagesOffline(newMessages, userId);
       FirebaseFirestore.instance
-        .collection("contacts")
-        .doc(userId)
-        .collection("messages").get().then((value) {
-          for(DocumentSnapshot ds in snapshot.docs){
+          .collection("contacts")
+          .doc(userId)
+          .collection("messages")
+          .get()
+          .then(
+        (value) {
+          for (DocumentSnapshot ds in snapshot.docs) {
             ds.reference.delete();
           }
-        },);
+        },
+      );
     } on Exception catch (e) {}
-    for (int i = 0; i < newMessages.length; i++) {
-      if (newMessages[i].uidReceiver != userId ||
-          newMessages[i].uidSender != contactUid) {
-        newMessages.remove(newMessages[i]);
-      }
-    }
+    emit(FirestoreMessagesLoaded(newMessages));
     return newMessages;
   }
 
   Future<List<Message>> _fetchMessagesOffline(
-      String userId, String contactUid) async {
+      String userId, String contactUid, Emitter<FirestoreState> emit) async {
+    emit(FirestoreMessagesLoading());
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<Message> newMessages = [];
 
@@ -80,6 +64,11 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
     messagesJSON?.forEach(((element) {
       newMessages.add(Message.fromJson(element));
     }));
+    newMessages.sort((a, b) {
+      return a.timestamp.compareTo(b.timestamp);
+    });
+    print("FETCH OFFLINE");
+    emit(FirestoreMessagesLoaded(newMessages));
     return newMessages;
   }
 
@@ -87,7 +76,6 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
       FirestoreSendMessage event, Emitter<FirestoreState> emit) async {
     emit(FirestoreMessageSending());
     try {
-      print(event.message.uidReceiver + "   " + event.message.uidSender);
       await FirebaseFirestore.instance
           .collection("contacts")
           .doc(event.message.uidReceiver)
@@ -96,8 +84,8 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
           .set(event.message.toMap());
       _saveMessageOffline(
           event.message, event.message.uidSender, event.message.uidReceiver);
-      await _fetchMessages(
-          event.message.uidSender, event.message.uidReceiver, emit);
+      // await _fetchMessages(
+      //     event.message.uidSender, contactUid: event.message.uidReceiver, emit);
       emit(FirestoreMessageSended());
     } on Exception catch (e) {
       emit(FirestoreMessageSendingError());
@@ -109,20 +97,20 @@ class FirestoreBloc extends Bloc<FirestoreEvent, FirestoreState> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String>? messagesJSON = await prefs.getStringList(
         userId + "__///__" + contactUid + "__///__" + "messages");
-    if(messagesJSON == null){
+    if (messagesJSON == null) {
       messagesJSON = [];
     }
     messagesJSON.add(message.toJson());
+    print("SAVE OFFLINE");
     prefs.setStringList(
-        userId + "__///__" + contactUid + "__///__" + "messages",
-        messagesJSON);
+        userId + "__///__" + contactUid + "__///__" + "messages", messagesJSON);
   }
 
-  Future<void> _saveMessagesOffline(List<Message> messages) async {
+  Future<void> _saveMessagesOffline(List<Message> messages, String userId) async {
     messages.forEach(
       (element) async {
         await _saveMessageOffline(
-            element, element.uidSender, element.uidReceiver);
+            element, userId, element.uidSender);
       },
     );
   }

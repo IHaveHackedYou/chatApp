@@ -9,8 +9,9 @@ abstract class AuthenticationEvent extends Equatable {
 
 class SignUp extends AuthenticationEvent {
   final String email, password;
+  final bool staySignedIn;
 
-  SignUp(this.email, this.password);
+  SignUp(this.email, this.password, this.staySignedIn);
 
   @override
   List<Object> get props => [email, password];
@@ -18,8 +19,9 @@ class SignUp extends AuthenticationEvent {
 
 class SignIn extends AuthenticationEvent {
   final String email, password;
+  final bool staySignedIn;
 
-  SignIn(this.email, this.password);
+  SignIn(this.email, this.password, this.staySignedIn);
   @override
   List<Object> get props => [email, password];
 }
@@ -29,9 +31,14 @@ class SignOut extends AuthenticationEvent {
   List<Object> get props => [];
 }
 
-class ResetPassword extends AuthenticationEvent{
+class ResetPassword extends AuthenticationEvent {
   final String email;
   ResetPassword(this.email);
   @override
   List<Object> get props => [email];
+}
+
+class TryAutoSignIn extends AuthenticationEvent {
+  @override
+  List<Object> get props => [];
 }

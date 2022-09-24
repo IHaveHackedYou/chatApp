@@ -17,6 +17,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
+  bool _checkBoxValue = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,6 +92,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   }
                 }),
               ),
+              Row(
+                    children: [
+                      Checkbox(value: _checkBoxValue, onChanged: ((value) {
+                        setState(() {
+                          _checkBoxValue = value!;
+                        });
+                      })),
+                      Text("stay signed in"),
+                    ],
+                  ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -106,7 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     onPressed: (() {
                       if (formKey.currentState!.validate()) {
                         context.read<AuthenticationBloc>().add(SignUp(
-                            emailController.text, passwordController.text));
+                            emailController.text, passwordController.text, _checkBoxValue));
                       }
                     }),
                   ),

@@ -63,12 +63,16 @@ class ContactCubit extends Cubit<ContactState> {
     if (contactAlreadyExisting) {
       emit(ContactsAddingFailed("Contact already existing"));
     } else if (allUsers.contains(contact.uid.trim())) {
-      _contacts.add(contact);
+      _contacts.insert(0, contact);
       emit(ContactsAdded());
     } else {
       emit(ContactsAddingFailed("Invalid contact"));
     }
     saveContacts();
+  }
+
+  void updateContact(){
+    emit(ContactsLoaded());
   }
 
   void removeContact(Contact contact) async {
